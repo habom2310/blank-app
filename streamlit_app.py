@@ -82,23 +82,24 @@ else:
     st.title("Banh Mi Nguyen App")
     tab1, tab2 = st.tabs(["Temperature Logs", "Settings"])
 
-    def submit_temperature_log_callback(cool_room, freezer, cold_bain_marie, drink_fridge):
+    def submit_temperature_log_callback():
         sydney_date_now = datetime.datetime.now(tz).date()
         sydney_time_now = datetime.datetime.now(tz).strftime("%H:%M:%S")
         # if values are 0, set to a random value between 2 and 4 for the cool room, cold bain marie, and drink fridge, and between -20 and -18 for the freezer, round to 1 decimal place
-        if cool_room == 0:
-            cool_room = round(random.uniform(2, 4), 1)
-        if freezer == 0:
-            freezer = round(random.uniform(-20, -18), 1)
-        if cold_bain_marie == 0:
-            cold_bain_marie = round(random.uniform(2, 4), 1)
-        if drink_fridge == 0:
-            drink_fridge = round(random.uniform(2, 4), 1)
+        print(st.session_state.cool_room, type(st.session_state.cool_room))
+        if float(st.session_state.cool_room) == 0.0:
+            st.session_state.cool_room = round(random.uniform(2, 4), 1)
+        if float(st.session_state.freezer) == 0.0:
+            st.session_state.freezer = round(random.uniform(-20, -18), 1)
+        if float(st.session_state.cold_bain_marie) == 0.0:
+            st.session_state.cold_bain_marie = round(random.uniform(2, 4), 1)
+        if float(st.session_state.drink_fridge) == 0.0:
+            st.session_state.drink_fridge = round(random.uniform(2, 4), 1)
 
         cursor.execute('''
             INSERT INTO temperature_logs (date, time, cool_room, freezer, cold_bain_marie, drink_fridge)
             VALUES (?, ?, ?, ?, ?, ?)
-        ''', (sydney_date_now, sydney_time_now, cool_room, freezer, cold_bain_marie, drink_fridge))
+        ''', (sydney_date_now, sydney_time_now, st.session_state.cool_room, st.session_state.freezer, st.session_state.cold_bain_marie, st.session_state.drink_fridge))
         conn.commit()
         st.success("Temperature log submitted successfully!")
 
@@ -113,9 +114,13 @@ else:
 
         # Input fields for temperature logs
         temperature_log_form = st.form("temperature_log_form")
-        cool_room = temperature_log_form.number_input("Cool Room Temperature (°C)", format="%.1f")
-        freezer = temperature_log_form.number_input("Freezer Temperature (°C)", format="%.1f")
-        cold_bain_marie = temperature_log_form.number_input("Cold Bain Marie Temperature (°C)", format="%.1f")
-        drink_fridge = temperature_log_form.number_input("Drink Fridge Temperature (°C)", format="%.1f")
-        submit_button = temperature_log_form.form_submit_button("Submit Temperature Log", on_click=submit_temperature_log_callback, args=(cool_room, freezer, cold_bain_marie, drink_fridge))
+        cool_room = temperature_log_form.number_input("Cool Room Temperature (°C)", key="cool_room", format="%.1f")
+        freezer = temperature_log_form.number_input("Freezer Temperature (°C)", key="freezer", format="%.1f")
+        cold_bain_marie = temperature_log_form.number_input("Cold Bain Marie Temperature (°C)", key="cold_bain_marie", format="%.1f")
+        drink_fridge = temperature_log_form.number_input("Drink Fridge Temperature (°C)", key="drink_fridge", format="%.1f")
+        submit_button = temperature_log_form.form_submit_button("Submit Temperature Log", on_click=submit_temperature_log_callback)
+
+    with tab2:
+        st.header("Invoice process")
+        
         
