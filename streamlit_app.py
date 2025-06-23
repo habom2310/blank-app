@@ -5,6 +5,21 @@ import pytz
 import datetime
 import random
 
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore
+
+
+if "db" not in st.session_state:
+    # get firebase cred from secrets
+    fb_credentials = dict(st.secrets["firebase"]['cred'])
+    firebase_admin.initialize_app(credentials.Certificate(fb_credentials))
+    st.session_state.db = firestore.client(database_id="invoicedb")
+
+if "collection_ref" not in st.session_state:
+    # Initialize Firestore database for invoices
+    st.session_state.collection_ref = st.session_state.db.collection('invoice')
+
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 # Check if the user is logged in
@@ -122,5 +137,4 @@ else:
 
     with tab2:
         st.header("Invoice process")
-        
-        
+        st.write(st.session_state.collection_ref.get()[0].to_dict())
