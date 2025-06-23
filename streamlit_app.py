@@ -34,25 +34,25 @@ if latest_date is not None:
     if latest_date.date() < today:
         # Generate random temperature logs for the missing days
         delta_days = (today - latest_date.date()).days
-        for i in range(delta_days):
+        for i in range(delta_days - 1):
             date = latest_date + datetime.timedelta(days=i + 1)
             morning_time = datetime.time(hour=random.randint(8, 9), minute=random.randint(30, 59))
             afternoon_time = datetime.time(hour=random.randint(18, 20), minute=random.randint(30, 59))
             
-            morning_timestamp = datetime.datetime.combine(date, morning_time)
-            afternoon_timestamp = datetime.datetime.combine(date, afternoon_time)
+            # morning_timestamp = datetime.datetime.combine(date, morning_time)
+            # afternoon_timestamp = datetime.datetime.combine(date, afternoon_time)
 
             # Insert morning log
             cursor.execute('''
-                INSERT INTO temperature_logs (timestamp, cool_room, freezer, cold_bain_marie, drink_fridge)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (morning_timestamp, round(random.uniform(0, 4), 1), round(random.uniform(-20, -18), 1), round(random.uniform(0, 4), 1), round(random.uniform(0, 4), 1)))
+                INSERT INTO temperature_logs (date, time, cool_room, freezer, cold_bain_marie, drink_fridge)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (date, morning_time, round(random.uniform(0, 4), 1), round(random.uniform(-20, -18), 1), round(random.uniform(0, 4), 1), round(random.uniform(0, 4), 1)))
             
             # Insert afternoon log
             cursor.execute('''
-                INSERT INTO temperature_logs (timestamp, cool_room, freezer, cold_bain_marie, drink_fridge)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (afternoon_timestamp, round(random.uniform(0, 4), 1), round(random.uniform(-20, -18), 1), round(random.uniform(0, 4), 1), round(random.uniform(0, 4), 1)))
+                INSERT INTO temperature_logs (date, time, cool_room, freezer, cold_bain_marie, drink_fridge)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (date, afternoon_time, round(random.uniform(0, 4), 1), round(random.uniform(-20, -18), 1), round(random.uniform(0, 4), 1), round(random.uniform(0, 4), 1)))
         
         conn.commit()
 
