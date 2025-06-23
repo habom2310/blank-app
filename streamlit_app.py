@@ -13,7 +13,8 @@ from firebase_admin import firestore
 if "db" not in st.session_state:
     # get firebase cred from secrets
     fb_credentials = dict(st.secrets["firebase"]['cred'])
-    if "endless-sprite-461412-a0" not in firebase_admin._apps:
+    print(list(firebase_admin._apps.values())[0].project_id)
+    if "endless-sprite-461412-a0" not in [v.project_id for v in firebase_admin._apps.values()]:
         firebase_admin.initialize_app(credentials.Certificate(fb_credentials))
     st.session_state.db = firestore.client(database_id="invoicedb")
 
