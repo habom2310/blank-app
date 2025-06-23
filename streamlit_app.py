@@ -9,6 +9,8 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
 
+# setup wide
+st.set_page_config(layout="wide")
 
 if "db" not in st.session_state:
     # get firebase cred from secrets
