@@ -75,11 +75,8 @@ else:
             delta_days = (today - latest_date.date()).days
             for i in range(delta_days - 1):
                 date = latest_date + datetime.timedelta(days=i + 1)
-                morning_time = datetime.time(hour=random.randint(8, 9), minute=random.randint(30, 59))
-                afternoon_time = datetime.time(hour=random.randint(18, 20), minute=random.randint(30, 59))
-                
-                # morning_timestamp = datetime.datetime.combine(date, morning_time)
-                # afternoon_timestamp = datetime.datetime.combine(date, afternoon_time)
+                morning_time = datetime.datetime.combine(date, datetime.time(hour=random.randint(8, 9), minute=random.randint(30, 59))).strftime('%H:%M:%S')
+                afternoon_time = datetime.datetime.combine(date, datetime.time(hour=random.randint(18, 20), minute=random.randint(30, 59))).strftime('%H:%M:%S')
 
                 # Insert morning log
                 cursor.execute('''
