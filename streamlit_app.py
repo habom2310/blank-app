@@ -49,8 +49,7 @@ else:
     query = '''
     CREATE TABLE IF NOT EXISTS temperature_logs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    date DATETIME NOT NULL,
-                    time DATETIME NOT NULL,
+                    datetime DATETIME NOT NULL,
                     cool_room REAL NOT NULL,
                     freezer REAL NOT NULL,
                     cold_bain_marie REAL NOT NULL,
@@ -63,11 +62,11 @@ else:
     tz = pytz.timezone('Australia/Sydney')
 
     # Get the latest date from the temperature logs
-    cursor.execute('SELECT MAX(date) FROM temperature_logs')
+    cursor.execute('SELECT MAX(datetime) FROM temperature_logs')
     latest_date = cursor.fetchone()[0]
     # From the latest date to today, add 2 rows of data for each day, one for a random time in the morning between 8:30 and 9:30 AM, and one for a random time in the afternoon between 6:30 and 8:30 PM.
     if latest_date is not None:
-        latest_date = datetime.datetime.strptime(latest_date, '%Y-%m-%d')
+        latest_date = datetime.datetime.strptime(latest_date, '%Y-%m-%d %H:%M:%S')
         today = datetime.datetime.now(tz).date()
 
         if latest_date.date() < today:
@@ -75,20 +74,20 @@ else:
             delta_days = (today - latest_date.date()).days
             for i in range(delta_days - 1):
                 date = latest_date + datetime.timedelta(days=i + 1)
-                morning_time = datetime.datetime.combine(date, datetime.time(hour=random.randint(8, 9), minute=random.randint(30, 59))).strftime('%H:%M:%S')
-                afternoon_time = datetime.datetime.combine(date, datetime.time(hour=random.randint(18, 20), minute=random.randint(30, 59))).strftime('%H:%M:%S')
+                morning_time = datetime.datetime.combine(date, datetime.time(hour=random.randint(8, 9), minute=random.randint(30, 59))).strftime('%Y-%m-%d %H:%M:%S')
+                afternoon_time = datetime.datetime.combine(date, datetime.time(hour=random.randint(18, 20), minute=random.randint(30, 59))).strftime('%Y-%m-%d %H:%M:%S')
 
                 # Insert morning log
                 cursor.execute('''
-                    INSERT INTO temperature_logs (date, time, cool_room, freezer, cold_bain_marie, drink_fridge)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                ''', (date, morning_time, round(random.uniform(0, 4), 1), round(random.uniform(-20, -18), 1), round(random.uniform(0, 4), 1), round(random.uniform(0, 4), 1)))
+                    INSERT INTO temperature_logs (datetime, cool_room, freezer, cold_bain_marie, drink_fridge)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (morning_time, round(random.uniform(0, 4), 1), round(random.uniform(-20, -18), 1), round(random.uniform(0, 4), 1), round(random.uniform(0, 4), 1)))
                 
                 # Insert afternoon log
                 cursor.execute('''
-                    INSERT INTO temperature_logs (date, time, cool_room, freezer, cold_bain_marie, drink_fridge)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                ''', (date, afternoon_time, round(random.uniform(0, 4), 1), round(random.uniform(-20, -18), 1), round(random.uniform(0, 4), 1), round(random.uniform(0, 4), 1)))
+                    INSERT INTO temperature_logs (datetime, cool_room, freezer, cold_bain_marie, drink_fridge)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (afternoon_time, round(random.uniform(0, 4), 1), round(random.uniform(-20, -18), 1), round(random.uniform(0, 4), 1), round(random.uniform(0, 4), 1)))
             
             conn.commit()
 
@@ -97,8 +96,7 @@ else:
     tab1, tab2 = st.tabs(["Temperature Logs", "Settings"])
 
     def submit_temperature_log_callback():
-        sydney_date_now = datetime.datetime.now(tz).date()
-        sydney_time_now = datetime.datetime.now(tz).strftime("%H:%M:%S")
+        sydney_time_now = datetime.datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
         # if values are 0, set to a random value between 2 and 4 for the cool room, cold bain marie, and drink fridge, and between -20 and -18 for the freezer, round to 1 decimal place
         print(st.session_state.cool_room, type(st.session_state.cool_room))
         if float(st.session_state.cool_room) == 0.0:
@@ -111,9 +109,9 @@ else:
             st.session_state.drink_fridge = round(random.uniform(2, 4), 1)
 
         cursor.execute('''
-            INSERT INTO temperature_logs (date, time, cool_room, freezer, cold_bain_marie, drink_fridge)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (sydney_date_now, sydney_time_now, st.session_state.cool_room, st.session_state.freezer, st.session_state.cold_bain_marie, st.session_state.drink_fridge))
+            INSERT INTO temperature_logs (datetime, cool_room, freezer, cold_bain_marie, drink_fridge)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (sydney_time_now, st.session_state.cool_room, st.session_state.freezer, st.session_state.cold_bain_marie, st.session_state.drink_fridge))
         conn.commit()
         st.success("Temperature log submitted successfully!")
 
@@ -121,9 +119,9 @@ else:
         st.header("Temperature Logs")
 
         # Display the temperature logs
-        cursor.execute('SELECT date, time, cool_room, freezer, cold_bain_marie, drink_fridge FROM temperature_logs')
+        cursor.execute('SELECT datetime, cool_room, freezer, cold_bain_marie, drink_fridge FROM temperature_logs')
         logs = cursor.fetchall()
-        df = pd.DataFrame(logs, columns=['date', 'time', 'Cool Room', 'Freezer', 'Cold Bain Marie', 'Drink Fridge'])
+        df = pd.DataFrame(logs, columns=['Datetime', 'Cool Room', 'Freezer', 'Cold Bain Marie', 'Drink Fridge'])
         st.dataframe(df)
 
         # Input fields for temperature logs
