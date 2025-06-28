@@ -15,15 +15,14 @@ st.set_page_config(layout="wide")
 if "db" not in st.session_state:
     # get firebase cred from secrets
     fb_credentials = dict(st.secrets["firebase"]['cred'])
-    print(list(firebase_admin._apps.values())[0].project_id)
     if "endless-sprite-461412-a0" not in [v.project_id for v in firebase_admin._apps.values()]:
         firebase_admin.initialize_app(credentials.Certificate(fb_credentials))
     st.session_state.db = firestore.client(database_id="invoicedb")
 
 if "collection_ref" not in st.session_state:
     # Initialize Firestore database for invoices
-    st.session_state.collection_ref = st.session_state.db.collection('invoice')
-
+    st.session_state.collection_ref = st.session_state.db.collection('invoice_may')
+    
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 # Check if the user is logged in
@@ -98,7 +97,7 @@ else:
     tab1, tab2 = st.tabs(["Temperature Logs", "Settings"])
 
     def submit_temperature_log_callback():
-        sydney_time_now = datetime.datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+        # sydney_time_now = datetime.datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
         # if values are 0, set to a random value between 2 and 4 for the cool room, cold bain marie, and drink fridge, and between -20 and -18 for the freezer, round to 1 decimal place
         print(st.session_state.cool_room, type(st.session_state.cool_room))
         if float(st.session_state.cool_room) == 0.0:
@@ -109,13 +108,25 @@ else:
             st.session_state.cold_bain_marie = round(random.uniform(2, 4), 1)
         if float(st.session_state.drink_fridge) == 0.0:
             st.session_state.drink_fridge = round(random.uniform(2, 4), 1)
+        date = st.session_state.date
+        time = st.session_state.time
+        # Combine date and time into a single datetime string
+        datetime_str = f"{date} {time}"
+        
 
         cursor.execute('''
             INSERT INTO temperature_logs (datetime, cool_room, freezer, cold_bain_marie, drink_fridge)
             VALUES (?, ?, ?, ?, ?)
-        ''', (sydney_time_now, st.session_state.cool_room, st.session_state.freezer, st.session_state.cold_bain_marie, st.session_state.drink_fridge))
+        ''', (datetime_str, st.session_state.cool_room, st.session_state.freezer, st.session_state.cold_bain_marie, st.session_state.drink_fridge))
         conn.commit()
         st.success("Temperature log submitted successfully!")
+        # reset the form fields
+        st.session_state.cool_room = 0.0
+        st.session_state.freezer = 0.0
+        st.session_state.cold_bain_marie = 0.0
+        st.session_state.drink_fridge = 0.0
+        # st.session_state.date = datetime.datetime.now(tz).date()
+        # st.session_state.time = datetime.datetime.now(tz).time()
 
     with tab1:
         st.header("Temperature Logs")
@@ -123,7 +134,7 @@ else:
         # Display the temperature logs
         cursor.execute('SELECT datetime, cool_room, freezer, cold_bain_marie, drink_fridge FROM temperature_logs')
         logs = cursor.fetchall()
-        df = pd.DataFrame(logs, columns=['Datetime', 'Cool Room', 'Freezer', 'Cold Bain Marie', 'Drink Fridge'])
+        df = pd.DataFrame(logs, columns=['Datetime', 'Cool Room', 'Freezer', 'Cold Bain Marie', 'Drink Fridge']).sort_values(by='Datetime', ascending=False).reset_index(drop=True)
         st.dataframe(df)
 
         # Input fields for temperature logs
@@ -132,6 +143,8 @@ else:
         freezer = temperature_log_form.number_input("Freezer Temperature (°C)", key="freezer", format="%.1f")
         cold_bain_marie = temperature_log_form.number_input("Cold Bain Marie Temperature (°C)", key="cold_bain_marie", format="%.1f")
         drink_fridge = temperature_log_form.number_input("Drink Fridge Temperature (°C)", key="drink_fridge", format="%.1f")
+        date_selector = temperature_log_form.date_input("Date", value=datetime.datetime.now(tz).date(), format="DD/MM/YYYY", key="date")
+        time_selector = temperature_log_form.time_input("Time", value=datetime.datetime.now(tz).time(), key="time")
         submit_button = temperature_log_form.form_submit_button("Submit Temperature Log", on_click=submit_temperature_log_callback)
 
     with tab2:
